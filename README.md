@@ -1,14 +1,14 @@
 ripeatlastracepath
 ==================
 
-A Python script/CGI which reads results from RIPE Atlas traceroute measurements (both IPv4 and IPv6) and shows the Autonomous Systems traversed to reach the target.
+A Python script/CGI which reads results from RIPE Atlas traceroute measurements (both IPv4 and IPv6) and shows the Autonomous Systems that probes traverse to reach the target.
 
 Overview
 --------
 
 The script can be used in two ways: **command line mode** and **CGI mode** (recommended).
 
-* When used in command line mode, the script analyzes the traceroute results and then shows a plain text summary of ASes traversed by the probes used in the measurement:
+* When used in command line mode, the script analyzes the traceroute results and then shows a plain text summary of traversed ASes:
 
         [...]
     

@@ -530,7 +530,7 @@ if CGI:
 	PrintLine("""
 	</pre>
 
-	<div id="canvas" style="height: 1800 px; width: 1000 px;"></div>
+	<div id="canvas" style="height: 1800 px; width: 100%;"></div>
 
 	<script type="text/javascript">
 
@@ -596,9 +596,11 @@ if CGI:
 
 	PrintLine("""
 		var layouter = new Graph.Layout.Spring(g);
+
 		layouter.layout();
 
-		renderer = new Graph.Renderer.Raphael('canvas', g, 1800, 1000);
+		$('#canvas').height( screen.height - 100 );
+		renderer = new Graph.Renderer.Raphael('canvas', g, $('#canvas').width(), $('#canvas').height());
 
 		renderer.draw();""")
 
