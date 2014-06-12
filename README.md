@@ -31,6 +31,8 @@ The script can be used in two ways: **command line mode** and **CGI mode** (reco
 In the example, a traceroute toward www.ripe.net is shown (measurement ID 1674977).
 Even if AS3333 (RIPE-NCC-AS) is not directly announced by AS1200 (AMS-IX1), some paths from remote probes to the target host traverse the AMS-IX infrastructure, which conversely announces its peering LAN prefixes, resulting in an additional "AS hop" in the path.
 
+A **demo** can be found on my blog: http://blog.pierky.com/ripe-atlas-a-script-to-show-ases-traversed-in-traceroute
+
 Installation
 ------------
 
