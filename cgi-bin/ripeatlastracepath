@@ -45,7 +45,7 @@ import json
 import urllib
 import ipdetailscache		# https://github.com/pierky/ipdetailscache - wget https://github.com/pierky/ipdetailscache/raw/master/ipdetailscache.py
 
-__version__ = "0.1"
+__version__ = "0.2"
 
 # Data directory
 # ==============
@@ -100,7 +100,7 @@ Licensed under The MIT License (MIT) - <a href="http://opensource.org/licenses/M
 	PrintLine("</body>")
 	PrintLine("</html>")
 
-	# comment to fix editor bug in syntax colors """
+	# 
 
 # ######################################################################################
 
@@ -167,6 +167,7 @@ else:
 	<script type="text/javascript" src="%(JS_BASE_PATH)sraphaeljs/raphael-min.js"></script>
 	<script type="text/javascript" src="%(JS_BASE_PATH)sgraphdracula/dracula_graffle.js"></script>
 	<script type="text/javascript" src="%(JS_BASE_PATH)sgraphdracula/dracula_graph.js"></script>
+	<script type="text/javascript" src="%(JS_BASE_PATH)sripeatlastracepath.js"></script>
 	<style type="text/css">
 		body { font-family:monospace; }
 
@@ -188,8 +189,6 @@ else:
 <center><h1>ripeatlastracepath %(VERSION)s</h1></center>
 
 <div id="tip"></div>""" % { "JS_BASE_PATH":JS_BASE_PATH, "VERSION":__version__ } )
-
-	# comment to fix editor bug in syntax colors """
 
 	InputOK = True
 
@@ -250,7 +249,23 @@ else:
 	PrintLine("</center>")
 	PrintLine("</form>")
 
-	# comment to fix editor bug in syntax colors """
+	PrintLine("""<div id="canvas" style="height: 1800 px; width: 100%; display: none"></div>""")
+
+        PrintLine("""
+                <center>
+                <input type="button" onclick="DoShowLoadGraph()" value="Load graph" id="loadgraphbutton">
+                <input type="button" onclick="DoSaveGraph()" value="Save graph" id="savegraphbutton" disabled>
+                </center>
+		<div id=graphdataarea style="DISPLAY:none">
+                <center>
+		<div align=center><span id=graphdatatext></span></div>
+                <textarea id=graphdata style="WIDTH: 90%; HEIGHT: 300px"></textarea>
+		<br>
+                <input type="button" onclick="DoLoadGraphFromText()" value="Load graph from JSON above" id="loadfromjsonabovebutton">
+
+                </center>
+                </div>
+	""")
 
 	if MeasurementID == 0 or not InputOK:
 		PrintFooter()
@@ -398,12 +413,8 @@ if not(CGI):
 if CGI:
 	PrintLine("""<a id="showallprobes" href="javascript:ShowAllProbes()">Show all probes</a>""")
 
-	# comment to fix editor bug in syntax colors """
-
 	PrintLine("<pre>")
 	PrintLine("""<div id=probes style="DISPLAY:none">""")
-
-	# comment to fix editor bug in syntax colors """
 
 ColsMaxLen = []
 for Col in zip(*Rows):
@@ -516,10 +527,12 @@ for R in Rows:
 
 PrintLine("")
 
+if CGI:
+	PrintLine("</pre>")
+
 # ------------------------------------------------------------------
 
 if CGI:
-	PrintLine("<hr>")
 
 	DistinctASes = []
 	for ASPath in DistinctASPaths:
@@ -528,112 +541,37 @@ if CGI:
 				DistinctASes.append( AS )
 
 	PrintLine("""
-	</pre>
-
-	<div id="canvas" style="height: 1800 px; width: 100%;"></div>
-
-	<script type="text/javascript">
-
-		var tip = $("#tip").hide();
-		var tipText = "";
-		var over = false;
-		var renderer;
-		var maxProbesCount = 0;
-		var mouseHovered = false;
-		var mouseHoveredTimeout = null;
-
-		function addTip(shape, node, txt){
-
-			$(shape).mouseenter(function(e){
-				tipText = txt;
-
-				if( node.ProbesCount > 0 ) {
-					tipText += ' - ' + node.ProbesCount + ' probes';
-				}
-
-				$(shape).bind("mousemove", function(e) {
-					tip.css("left", e.pageX+20).css("top", e.pageY+20);
-				});
-
-				if( mouseHoveredTimeout == null ) {
-					mouseHoveredTimeout = setTimeout( function() {
-						tip.text(tipText);
-						tip.fadeIn();
-						mouseHovered = true;
-					}, 200 )
-				}
-			});
-
-			$(shape).mouseleave(function(){
-				$(shape).unbind("mousemove");
-
-				if( mouseHovered ) {
-					tip.fadeOut(200);
-					mouseHovered = true;
-				}
-
-				if( mouseHoveredTimeout != null ) {
-					clearTimeout(mouseHoveredTimeout);
-					mouseHoveredTimeout = null;
-				}
-			});
-
-		}
-
-		var g = new Graph();
-	""")
-
-	# comment to fix editor bug in syntax colors """
+	<script>
+		nodes = [];
+	""" )
 
 	for AS in DistinctASes:
-		PrintLine( "		g.addNode('%s');" % ( AS["ASN"] ) )
-		PrintLine( "		g.nodes['%s'].ProbesCount = 0;" % AS["ASN"] )
+		PrintLine( """
+		node = {};
+		node.ASN = '%(ASN)s';
+		node.ProbesCount = 0;
+		node.Holder = '%(Holder)s';
+		nodes.push(node);
+		""" % { "ASN": AS["ASN"], "Holder": AS["Holder"].replace("'","") } )
 
+	PrintLine( "		edges = [];" )
 	for ASPath in DistinctASPaths:
 		for i in range(0, len(ASPath)-1 ):
-			PrintLine( "		g.addEdge('%(A)s', '%(B)s');" % { "A": ASPath[i]["ASN"], "B": ASPath[i+1]["ASN"] } )
-			PrintLine( "		g.nodes['%s'].ProbesCount += %d;" % ( ASPath[i]["ASN"], SelectedASPaths.count(ASPath) ) )
+			PrintLine( """
+		edge = {};
+		edge.A = '%(A)s';
+		edge.B = '%(B)s';
+		edge.ProbesCount = %(ProbesCount)d;
+		edges.push(edge);
+			""" % { "A": ASPath[i]["ASN"], "B": ASPath[i+1]["ASN"], "ProbesCount": SelectedASPaths.count(ASPath) } )
 
 	PrintLine("""
-		var layouter = new Graph.Layout.Spring(g);
+		data = {};
+		data.Nodes = nodes;
+		data.Edges = edges;
 
-		layouter.layout();
-
-		$('#canvas').height( screen.height - 100 );
-		renderer = new Graph.Renderer.Raphael('canvas', g, $('#canvas').width(), $('#canvas').height());
-
-		renderer.draw();""")
-
-	# comment to fix editor bug in syntax colors """
-
-	for AS in DistinctASes:
-		PrintLine( "		addTip( $('ellipse#%s'), g.nodes[%s], '%s' );" % ( AS["ASN"], AS["ASN"], AS["Holder"].replace("'","") ) )
-
-	PrintLine("""
-		for ( n in g.nodes ) {
-			if ( g.nodes[n].ProbesCount > maxProbesCount ) {
-				maxProbesCount = g.nodes[n].ProbesCount;
-			}
-		}
-
-		var strokeWidth = 0;
-		var strokeStep = Math.round( maxProbesCount / 4 );
-
-		for( n in g.nodes ) {
-			if( g.nodes[n].ProbesCount >= 1 ) {
-				if ( g.nodes[n].ProbesCount == 1 ) {
-					strokeWidth = 1;
-				} else if ( g.nodes[n].ProbesCount >= maxProbesCount - strokeStep ) {
-					strokeWidth = 5
-				} else {
-					strokeWidth = Math.floor( g.nodes[n].ProbesCount / strokeStep ) + 2;
-				}
-				$('ellipse#' + n).css('strokeWidth', strokeWidth + 'px');
-			}
-		}
+		DoLoadGraph();
 	""")
-
-	# comment to fix editor bug in syntax colors """
 
 	PrintLine("</script>")
 
