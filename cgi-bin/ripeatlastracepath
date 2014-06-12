@@ -45,7 +45,7 @@ import json
 import urllib
 import ipdetailscache		# https://github.com/pierky/ipdetailscache - wget https://github.com/pierky/ipdetailscache/raw/master/ipdetailscache.py
 
-__version__ = "0.1"
+__version__ = "0.2"
 
 # Data directory
 # ==============
@@ -190,8 +190,6 @@ else:
 
 <div id="tip"></div>""" % { "JS_BASE_PATH":JS_BASE_PATH, "VERSION":__version__ } )
 
-	# 
-
 	InputOK = True
 
 	if "QUERY_STRING" in os.environ:
@@ -255,14 +253,15 @@ else:
 
         PrintLine("""
                 <center>
-                <input type="button" onclick="DoShowLoadGraph()" value="Load graph">
-                <input type="button" onclick="DoSaveGraph()" value="Save graph">
+                <input type="button" onclick="DoShowLoadGraph()" value="Load graph" id="loadgraphbutton">
+                <input type="button" onclick="DoSaveGraph()" value="Save graph" id="savegraphbutton" disabled>
                 </center>
 		<div id=graphdataarea style="DISPLAY:none">
                 <center>
+		<div align=center><span id=graphdatatext></span></div>
                 <textarea id=graphdata style="WIDTH: 90%; HEIGHT: 300px"></textarea>
 		<br>
-                <input type="button" onclick="DoLoadGraphFromText()" value="Load graph from JSON above">
+                <input type="button" onclick="DoLoadGraphFromText()" value="Load graph from JSON above" id="loadfromjsonabovebutton">
 
                 </center>
                 </div>
@@ -414,12 +413,8 @@ if not(CGI):
 if CGI:
 	PrintLine("""<a id="showallprobes" href="javascript:ShowAllProbes()">Show all probes</a>""")
 
-	# 
-
 	PrintLine("<pre>")
 	PrintLine("""<div id=probes style="DISPLAY:none">""")
-
-	# 
 
 ColsMaxLen = []
 for Col in zip(*Rows):
@@ -563,11 +558,11 @@ if CGI:
 	for ASPath in DistinctASPaths:
 		for i in range(0, len(ASPath)-1 ):
 			PrintLine( """
-				edge = {};
-				edge.A = '%(A)s';
-				edge.B = '%(B)s';
-				edge.ProbesCount = %(ProbesCount)d;
-				edges.push(edge);
+		edge = {};
+		edge.A = '%(A)s';
+		edge.B = '%(B)s';
+		edge.ProbesCount = %(ProbesCount)d;
+		edges.push(edge);
 			""" % { "A": ASPath[i]["ASN"], "B": ASPath[i+1]["ASN"], "ProbesCount": SelectedASPaths.count(ASPath) } )
 
 	PrintLine("""
