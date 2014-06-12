@@ -146,7 +146,7 @@
 
 		function DoShowLoadGraph() {
 			$('#graphdataarea').show();
-			$('#graphdatatext').text('Paste JSON data previously saved here.');
+			$('#graphdatatext').text('Paste JSON data previously saved here, then click on the "Load graph from JSON above" button.');
 		}
 
 		function DoLoadGraphFromText() {
