@@ -24,7 +24,15 @@
 				tipText = txt;
 
 				if( node.ProbesCount > 0 ) {
-					tipText += ' - ' + node.ProbesCount + ' probes';
+					tipText += ' - ';
+					if( node.ProbesCount == node.TransitOnly_ProbesCount ) {
+						tipText += node.TransitOnly_ProbesCount + ' probes, transit only';
+					} else {
+						tipText += node.ProbesCount + ' probes';
+						if( node.TransitOnly_ProbesCount > 0 ) {
+							tipText += ' (' + node.TransitOnly_ProbesCount + ' transit only)';
+						}
+					}
 				}
 
 				node.TipText = tipText;
@@ -68,10 +76,12 @@
 			for( n in data.Nodes ) {
 				g.addNode( data.Nodes[n].ASN );
 				g.nodes[ data.Nodes[n].ASN ].ProbesCount = 0;
+				g.nodes[ data.Nodes[n].ASN ].TransitOnly_ProbesCount = 0;
 			}
 			for( e in data.Edges ) {
-				g.addEdge( data.Edges[e].A, data.Edges[e].B );
+				g.addEdge( data.Edges[e].A, data.Edges[e].B, { directed: true } );
 				g.nodes[ data.Edges[e].A ].ProbesCount += data.Edges[e].ProbesCount;
+				g.nodes[ data.Edges[e].B ].TransitOnly_ProbesCount += data.Edges[e].ProbesCount;
 			}
 
 			var layouter = new Graph.Layout.Spring(g);
@@ -138,6 +148,10 @@
 						strokeWidth = Math.floor( g.nodes[n].ProbesCount / strokeStep ) + 2;
 					}
 					$('ellipse#' + n).css('strokeWidth', strokeWidth + 'px');
+
+					if( g.nodes[n].ProbesCount == g.nodes[n].TransitOnly_ProbesCount ) {
+						$('ellipse#' + n).css('stroke-dasharray','5,5');
+					}
 				}
 			}
 
