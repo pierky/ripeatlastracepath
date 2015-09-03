@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>RIPE Atlas Tracepath</title>
+
+<script type=text/javascript>
+	$DEMO = false;
+
+	$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+	$CURRENT_RELEASE = '{{ CURRENT_RELEASE }}';
+{% if CHECKUPDATES_ENABLE %}
+	$CHECKUPDATES_ENABLE = true;
+	$CHECKUPDATES_INTERVAL = {{ CHECKUPDATES_INTERVAL }};
+	{% if CHECKUPDATES_PRERELEASE %}
+	$CHECKUPDATES_PRERELEASE = true;
+	{% else %}
+	$CHECKUPDATES_PRERELEASE = false;
+	{% endif %}
+{% else %}
+	$CHECKUPDATES_ENABLE = false;
+	$CHECKUPDATES_INTERVAL = 0;
+	$CHECKUPDATES_PRERELEASE = false;
+{% endif %}
+</script>
+<script src="static/js/jquery/jquery-2.1.4.min.js"></script>
+<script src="static/js/d3/d3.js"></script>
+<script src="static/js/graph_data.js"></script>
+<script src="static/js/gui.js"></script>
+<script src="static/js/graph.js"></script>
+<script src="static/js/githubchecknewrelease.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<style>
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+	position: relative;
+	min-height: 100%;
+}
+body {
+	/* Margin bottom by footer height */
+	margin-bottom: 30px;
+}
+.footer {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	/* Set the fixed height of the footer here */
+	height: 30px;
+}
+
+#newrelease {
+	color: red;
+	display: none;
+	margin-right: 10px;
+}
+
+.demomsgs {
+	display: none;
+	color: red;
+}
+
+/* Graph
+-------------------------------------------------- */
+
+.brush .extent {
+	fill-opacity: .1;
+	stroke: #fff;
+	shape-rendering: crispEdges;
+}
+
+.selected {
+	stroke: #FF0000;
+}
+.selected circle {
+	stroke: #FF0000;
+}
+</style>
+</head>
+
+<body>
+
+<div class="navbar navbar-default" id="header">
+<div class="container-fluid">
+	<div class="navbar-header">
+		<a target="_blank" class="navbar-brand" href="http://www.pierky.com/ripeatlastracepath">RIPE Atlas Tracepath</a>
+	</div>
+	<div id="navbar">
+		<form class="navbar-form form-inline">
+			<div class="form-group">
+				<label class="sr-only" for="msmid">Measurement ID</label>
+				<input class="form-control" type="number" size=8 style="width: 8em;" id=msmid placeholder="Msm ID" title="Measurement ID">
+				<label class="sr-only" for="apikey">API key</label>
+				<input class="form-control" type="text" size=36 id=apikey placeholder="API key" title="API key (needed only for not public measurements)">
+				<button class="btn btn-default btn-primary" type="button" onclick="GUI_DoLoadMsm()" id="load_msm_btn">Load measurement</button>
+			</div>
+			<div class="form-group">
+				<button class="btn btn-default" onclick="GUI_MsmInfo()" type="button" disabled id="msminfo_btn" title="Measurement details">
+					<span class="glyphicon glyphicon-info-sign"></span>
+				</button>
+				<button class="btn btn-default" onclick="GUI_DoSaveGraph()" type="button" disabled id="savegraph_btn">
+					<span class="glyphicon glyphicon-floppy-disk"></span>
+					Save graph
+				</button>
+				<button class="btn btn-default" onclick="GUI_DoLoadGraph()" type="button" id="loadgraph_btn">
+					<span class="glyphicon glyphicon-folder-open"></span>
+					Load graph
+				</button>
+			</div>
+ 			<div class="form-group">
+				<div class="dropdown">
+					<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="options_btn">
+						<span class="glyphicon glyphicon-cog"></span> <span class="caret"></span>
+					</button>
+					<ul class="dropdown-menu">
+						<li id=opt_show_text><a href="#" class="small" data-value="show_text" tabIndex="-1"><input type="checkbox"/>&nbsp;Show textual result</a></li>
+						<li id=opt_show_prbs><a href="#" class="small" data-value="show_prbs" tabIndex="-1"><input type="checkbox"/>&nbsp;Show probes</a></li>
+					</ul>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+</div>
+
+<div class="container-fluid">
+	<div class="alert alert-danger" role="alert" id="alert_div" style="display:none"></div>
+
+	<div class="alert alert-info" role="alert" style="display:none" id="info_div">
+		<span id="info_text"></span>
+		<div class="progress" id="progress_div" style="display:none">
+			<div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="" aria-valuemin="0" aria-valuemax="100" id="progress">
+			<span class="sr-only" id="progress_text"></span>
+			</div>
+		</div>
+	</div>
+
+	<div style="display:none" id="msminfo_div" class="alert alert-success" role="alert">
+		<dl class="dl-horizontal" id="msminfo_dl">
+		</dl>
+
+		<button class="btn btn-default" onclick="GUI_DoCloseMsmInfo()">Close</button>
+	</div>
+
+	<div id=graphdataarea style="DISPLAY:none;">
+		<center>
+		<div align=center><span id=graphdatatext></span></div>
+		<textarea id=graphdata style="WIDTH: 90%; HEIGHT: 300px" placeholder="Paste graph's JSON blob here"></textarea>
+		<br>
+		<button class="btn btn-default" onclick="GUI_DoSavePNG()" type="button" id="savepng_btn">
+			<span class="glyphicon glyphicon-picture"></span>
+			Export as PNG
+		</button>
+		<button class="btn btn-default" onclick="GUI_DoLoadGraphFromText()" id="loadgraphfromjson_btn">Load graph from JSON above</button>
+		<button class="btn btn-default" onclick="GUI_DoCloseLoadGraph()">Close</button>
+		<div style="display:none" id="svgdataurl"></div>
+		<div style="display:none" id="pngdataurl"></div>
+		</center>
+	</div>
+
+	<div class="row">
+		<div id="help" class="col-lg-12">
+		<h1>RIPE Atlas Tracepath</h1>
+		<span class="demomsgs">
+			This is a demo version of RIPE Atlas Tracepath, only measurement ID 1674977 can be used. Data and IP addresses details may be outdated.<br>
+			Hit the <b>Load graph</b> button to load a sample graph that has already been customized or push the <b>Load measurement</b> button to build it from scratch.<br>
+			To use the real version, <a href="https://github.com/pierky/ripeatlastracepath" target="_blank">download and install it</a>.<br>
+		</span>
+
+		<h2>Usage</h2>
+		<ul>
+			<li>Enter the ID of the <a href="https://atlas.ripe.net/measurements/?search=&status=&af=&kind=2%2C4&age=" target="_blank">RIPE Atlas traceroute measurement</a> to analyze into the <code>Msm ID</code> field.<br>
+			<ul>
+				<li>To run your own distributed traceroute, <a href="https://atlas.ripe.net/get-involved/become-a-host/" target="_blank">host a RIPE Atlas probe</a>, start earning credits and perform your own customised measurements.</li>
+			</ul>
+			</li>
+			<li>If needed, enter a <a href="https://atlas.ripe.net/docs/keys/" target="_blank">RIPE Atlas API key</a> which is authorized to access the given measurement into the <code>API Key</code> field.</li>
+			<li>Hit the <b>Load measurement</b> button and wait until the results are loaded and the graph displayed.</li>
+		</ul>
+		Once the graph has been shown you can adjust probes' and ASes' position by moving them on the canvas; multiple selection allowed using the <kbd>shift</kbd> key. Double click on an AS or probe to restore its default position.<br>
+		You can save the graph using the <b>Save graph</b> button, exporting it as a PNG image or JSON blob, and import it later using the <b>Load graph</b> button.<br>
+		<br>
+		Options are available to show/hide probes and text results.
+
+		<h2>Links</h2>
+		<ul>
+			<li><a href="https://atlas.ripe.net/" target="_blank">RIPE Atlas</a></li>
+			<li>RIPE Atlas Tracepath <a href="http://www.pierky.com/ripeatlastracepath" target="_blank">web-site</a> and 
+				<a href="https://github.com/pierky/ripeatlastracepath" target="_blank">on GitHub</a> (please, report any issue <a href="https://github.com/pierky/ripeatlastracepath/issues" target="_blank">here</a>)</li>
+			<li>Author, <a href="http://www.pierky.com/" target="_blank">Pier Carlo Chiodi</a></li>
+		</ul>
+		</div>
+		<div id="graph_div" class="col-lg-12"></div>
+	</div>
+	<div class="row" id="text_div" style="display:none">
+		<div class="col-lg-12"><pre id="text_result">No results yet.</pre></div>
+	</div>
+</div>
+
+<footer class="footer" id="footer">
+	<div class="container-fluid">
+		<div class="col-lg-3 padding">
+			by <a href="http://www.pierky.com" target="_blank">Pier Carlo Chiodi</a>
+		</div>
+		<div id="map-legend" class="col-lg-6 padding">
+		<center>
+			<div id=rtt_colors>
+			<span>Probe RTT:</span>
+			</div>
+		</center>
+		</div>
+		<div class="col-lg-3 padding">
+		<p class="text-right">
+		<a id="newrelease" target="_blank" href="#">new release available!</a>
+		<span style="opacity:0.5" id="curr_release"></span><span class="demomsgs"> demo</span>
+		</p>
+		</div>
+	</div>
+</footer>
+
+</div>
+</body>
+</html>

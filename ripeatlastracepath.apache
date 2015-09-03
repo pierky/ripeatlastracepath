@@ -1,0 +1,52 @@
+<VirtualHost *>
+	ServerName _default_
+
+	# SECURITY CONSIDERATIONS
+	# ---------------------------------------------------
+	#
+	# Please take security into account before using this
+	# template and avoid to make RIPE Atlas Tracepath
+	# publicly reachable without proper considerations.
+	#
+	# Apache Authentication and Authorization:
+	# http://httpd.apache.org/docs/2.2/howto/auth.html
+	# http://httpd.apache.org/docs/2.4/howto/auth.html
+	#
+	# Apache Access Control:
+	# http://httpd.apache.org/docs/2.2/howto/access.html
+	# http://httpd.apache.org/docs/2.4/howto/access.html
+
+	# mod_wsgi required
+	# ---------------------------------------------------
+	#
+	# A quick setup guide is available on Flask web-site:
+	#
+	#	http://flask.pocoo.org/docs/0.10/deploying/mod_wsgi/
+	#
+	# See http://www.modwsgi.org/ for more details.
+
+	WSGIDaemonProcess ripeatlastracepathapp
+
+	# Replace RIPEATLASTRACEPATHDIR (3 occurrences + this comment) with the path 
+	# of RIPE Atlas Tracepath directory.
+	#
+	# example:
+	#   WSGIScriptAlias /ripeatlastracepath/ripeatlastracepath /opt/ripeatlastracepath/web.wsgi
+
+	WSGIScriptAlias /ripeatlastracepath/ripeatlastracepath RIPEATLASTRACEPATHDIR/web.wsgi
+	Alias /ripeatlastracepath/static/ RIPEATLASTRACEPATHDIR/static/
+
+	<Directory RIPEATLASTRACEPATHDIR/>
+		WSGIProcessGroup ripeatlastracepathapp
+		WSGIApplicationGroup %{GLOBAL}
+		WSGIScriptReloading On
+
+		# Apache 2.2
+		Order allow,deny	# at least replace with Order Deny,Allow / Deny from all / Allow from your_subnet
+		Allow from all		# or use other security mechanisms
+
+		# Apache 2.4
+		#Require all granted	# at least replace with Require ip x.y.z/w
+					# or use other security mechanisms
+	</Directory>
+</VirtualHost>

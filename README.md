@@ -1,118 +1,143 @@
-ripeatlastracepath
-==================
+# RIPE Atlas Tracepath
 
-A Python script/CGI which reads results from RIPE Atlas traceroute measurements (both IPv4 and IPv6) and shows the Autonomous Systems that probes traverse to reach the target.
+A JavaScript/Python web-app which reads results from RIPE Atlas traceroute measurements (both IPv4 and IPv6) and shows the Autonomous Systems that probes traverse to reach the target.
 
-Overview
---------
+## Overview
 
-The script can be used in two ways: **command line mode** and **CGI mode** (recommended).
+Given a [RIPE Atlas](https://atlas.ripe.net/) traceroute measurement, it builds a graph with all the Autonomous Systems traversed by probes and shows their average RTT toward the target.
+Graphs can be saved in JSON format and loaded later for further analysis, or they can be exported as PNG images.
 
-* When used in command line mode, the script analyzes the traceroute results and then shows a plain text summary of traversed ASes:
+![Example](https://raw.github.com/pierky/ripeatlastracepath/master/example.png)
 
-        [...]
-    
-        2 probes:  7922, COMCAST-7922 - Comcast Cable Communications, Inc.,US
-                   3356, LEVEL3 - Level 3 Communications, Inc.,US
-                   3333, RIPE-NCC-AS Reseaux IP Europeens Network Coordination Centre (RIPE NCC),NL
-        
-        3 probes:  1273, CW Cable and Wireless Worldwide plc,GB
-                   1200, AMS-IX1 Amsterdam Internet Exchange B.V.,NL
-                   3333, RIPE-NCC-AS Reseaux IP Europeens Network Coordination Centre (RIPE NCC),NL
-        
-        [...]
+A demo can be found at http://www.pierky.com/ripeatlastracepath/demo.
 
-* When run in CGI mode, the script also returns a web page containing a graph of the traversed ASes, which may offer a clearer view of the results:
+## Dependencies
 
-  ![Graph example](https://raw.github.com/pierky/ripeatlastracepath/master/example.png)
+### Python
 
-  (the graph is rendered using external client-side JavaScript libraries: please see the *Third-party Libraries* section fore more information).
+Yes, Python 2.7 (probably it's already on your system).
 
-In the example, a traceroute toward www.ripe.net is shown (measurement ID 1674977).
-Even if AS3333 (RIPE-NCC-AS) is not directly announced by AS1200 (AMS-IX1), some paths from remote probes to the target host traverse the AMS-IX infrastructure, which conversely announces its peering LAN prefixes, resulting in an additional "AS hop" in the path.
+- One step installation: `apt-get install python2.7` (Debian-like)
 
-A **demo** can be found on my blog: http://blog.pierky.com/ripe-atlas-a-script-to-show-ases-traversed-in-traceroute
+- More details: https://docs.python.org/2/
 
-Installation
-------------
+### Flask
 
-Please consider security aspects of your network before installing this script, especially if you want to use it in CGI mode; it is intended for a restricted audience of trusted people and it does not implement any kind of security mechanism.
+The web front-end has been written within the [Flask](http://flask.pocoo.org/) 0.10.1 framework.
 
-### ipdetailscache library
+- One step installation: `pip install Flask`
 
-The **ipdetailscache** library is required to run this script: its installation and requirements can be found at https://github.com/pierky/ipdetailscache.
-Download it and simply put the *ipdetailscache.py* in the same directory of this script.
+- More details: http://flask.pocoo.org/docs/0.10/installation/
 
-In order to make it work, a local directory must be created with r&w permissions; it is used to store IP addresses details cache files. 
-By default, this script uses **/opt/ripeatlastracepath**, but it can be changed by simply editing the *DATA_DIR* variable.
-If you plan to run the script in CGI mode, please ensure that web server process has the correct permissions on this directory.
+### ipaddr library
 
-### CGI mode
+The [ipdetailscache](https://github.com/pierky/ipdetailscache) library, here included, requires [ipaddr](https://github.com/google/ipaddr-py).
 
-An example of Apache configuration and directories layout follows. Be sure to set right permissions on files and directories.
+- One step installation: `pip install ipaddr`
 
-#### Directories tree
+- More details: https://github.com/google/ipaddr-py
 
-* /var/www/ripeatlastracepath/cgi-bin
+## Installation
 
-  files: ripeatlastracepath and ipdetailscache.py (from "ipdetailscache" library - https://github.com/pierky/ipdetailscache)
+Simply fetch the GitHub repository (or its [last release](https://github.com/pierky/ripeatlastracepath/releases/latest)) into your local directory:
 
-* /var/www/ripeatlastracepath/htdocs/js
+- One step installation:
 
-  * graphdracula
+ `git clone https://github.com/pierky/ripeatlastracepath.git /opt/ripeatlastracepath`
 
-    files: dracula_algorithms.js, dracula_graffle.js and dracula_graph.js (from Dracula Graph Library by Johann Philipp Strathausen - http://www.graphdracula.net/)
+ (replace /opt/ripeatlastracepath with your preferred destination directory)
 
-  * raphaeljs
+- More details: https://help.github.com/articles/fetching-a-remote/
 
-    files: raphael-min.js (from Raphael JavaScript Library by Dmitry Baranovskiy - http://raphaeljs.com)
+## Configuration
 
-#### Apache configuration
+### Application specific configurations
 
-        ScriptAlias /ripeatlastracepath/ripeatlastracepath.cgi /var/www/ripeatlastracepath/cgi-bin/ripeatlastracepath
-        Alias /ripeatlastracepath /var/www/ripeatlastracepath/htdocs
-        <Directory "/var/www/ripeatlastracepath/cgi-bin">
-                AllowOverride None
-                Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+Rename the **config-distrib.py** to **config.py** and edit it with your preferred text editor.
 
-                # Security, authentication and so on...
-                Order allow,deny
-                Allow from all
-        </Directory>
+ `mv config-distrib.py config.py`
 
-Usage
------
+**IMPORTANT**: when done, set the `CONFIG_DONE` at the end of the file to `True`.
 
-For each run, the RIPE Atlas measurement ID is required; if the measurement is not public, the API key is also needed in order to access the results.
+### Local var directory
 
-Results are then downloaded in a local file for later use; traceroute hops IP addresses are analyzed using the "ipdetailscache" library (https://github.com/pierky/ipdetailscache) and their details locally cached.
+Build the *var* directory referenced by the `VAR_DIR` variable:
 
-Radius from the target may be specified as an option (default is 3); this value is used to build an aggregate count of how many probes reach the target by traversing the last *radius* ASes.
+ `mkdir var`
 
-Command line mode syntax:
+Cached IP addresses' details will be stored here.
 
-    ./ripeatlastracepath [-k api_key ] [-r radius] [-i] [-f] measurement_id
-    
-    Options:
-        -k      RIPEAtlas API key to access the measurement
-        -r      Number of ASes from the target to summarize paths (default: 3)
-        -i      Include paths from probes which did not complete the traceroute
-        -f      Skip local measurement cache and force its download
+### Web front-end
 
-Third-party Libraries
----------------------
+The web front-end can be deployed in two flavors:
 
-Part of this work is based on Raphael JavaScript Library by Dmitry Baranovskiy (http://raphaeljs.com/) and Dracula Graph Library by Johann Philipp Strathausen (http://www.graphdracula.net/).
-Please see their web sites to verify browser compatibility.
+- using the **Flask builtin web server**, not suitable for production environment but useful to have a working application in few minutes;
 
-Bug? Issues?
-------------
+- using [WSGI containers](http://flask.pocoo.org/docs/0.10/deploying/wsgi-standalone/) or **Apache with mod_wsgi**.
+
+In this document you can find two brief guides about the builtin server and the Apache configuration.
+
+Please consider security aspects of your network before installing RIPE Atlas Tracepath; it is intended for a restricted audience of trusted people and it does not implement any kind of security mechanism.
+
+#### Flask builtin web server
+
+- To change the listening IP address, edit the last line of **web.py**:
+
+ `ripeatlastracepathapp.run(host="0.0.0.0",threaded=True)`
+
+- From the directory where RIPE Atlas Tracepath has been downloaded, run
+
+ `python web.py`
+
+ The output will show how to reach the application:
+
+ ```
+ * Running on http://0.0.0.0:5000/
+ * Restarting with reloader
+ ```
+
+ Any output debug message will be written to stdout.
+
+- Point your browser to the given URL (http://your_ip:5000/ in the example).
+
+#### Apache
+
+- Install **mod_wsgi** (if not yet): `apt-get install libapache2-mod-wsgi` (Debian-like)
+
+- Configure Apache to use **mod_wsgi**.
+
+ An example is provided in the **ripeatlastracepath.apache** file.
+
+ A quick setup guide is available on [Flask web-site](http://flask.pocoo.org/docs/0.10/deploying/mod_wsgi/).
+
+ See http://www.modwsgi.org/ for more details.
+
+- Edit **web.wsgi** and set ```BASE_DIR``` to the directory where RIPE Atlas Tracepath has been downloaded in (/opt/ripeatlastracepath for example).
+
+- Ensure that the **var** directory has **write permissions** for the user used by Apache:
+
+ ```
+ chown -R :www-data var
+ chmod -R g+w var
+ chmod g+s var
+ ```
+
+- Visit the URL configured in your Apache *WSGIScriptAlias* configuration statement (http://your_ip//ripeatlastracepath/ripeatlastracepath for example).
+
+## Third-party Libraries
+
+Part of this work is based on [D3.js](http://d3js.org/) library. Please see its web sites to verify browser compatibility.
+
+## Old releases
+
+The old version of this tool, CGI-based, has been moved in the [old_style branch](https://github.com/pierky/ripeatlastracepath/tree/old_style).
+
+## Bug? Issues?
 
 Have a bug? Please create an issue here on GitHub at https://github.com/pierky/ripeatlastracepath/issues.
 
-Author
-------
+## Author
 
-Pier Carlo Chiodi - http://pierky.com/aboutme
+Pier Carlo Chiodi - http://www.pierky.com/
 
 Blog: http://blog.pierky.com Twitter: <a href="http://twitter.com/pierky">@pierky</a>
