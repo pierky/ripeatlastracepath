@@ -410,8 +410,7 @@ function GUI_DoLoadMsm() {
                         rtt_tot += prb_response['result'][hop]['result'][packet_idx]['rtt'];
                         rtt_cnt++;
                       }
-                    } else {
-                      throw 'Last hop is not the target';
+                      break;
                     }
                   }
                 }
