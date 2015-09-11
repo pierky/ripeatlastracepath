@@ -6,7 +6,7 @@ from ipdetailscache import IPDetailsCache
 import os
 from config import *
 
-CURRENT_RELEASE = "v0.3.0"
+CURRENT_RELEASE = "v0.3.1"
 
 ripeatlastracepathapp = Flask(__name__)
 
