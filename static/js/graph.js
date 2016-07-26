@@ -69,13 +69,10 @@ function LoadGraph() {
 
   link = link.data(graph_data.links).enter().append("line")
     .attr("class", function(d) {
-      if( d.LinkType === 'AS' )
-        return 'ASPath';
-      else
-        return 'ProbeLink';
+      return d.LinkType;
     })
     .attr("marker-end", function(d) {
-      if( d.LinkType === 'AS' ) {
+      if( d.LinkType === 'DataPath' ) {
         return "url(#arrow)";
       } else {
         return null;
@@ -111,8 +108,13 @@ function LoadGraph() {
         if (d.TargetAS) {
           return -500;
         }
-        if (d.ProbesGoingThroughThisAS > 0) {
-          return -100 * d.ProbesGoingThroughThisAS;
+        if (d.ProbesGoingThroughThisNode > 0) {
+          return -100 * d.ProbesGoingThroughThisNode;
+        }
+        return 1;
+      } else if( d.NodeType == 'IXP' ) {
+        if (d.ProbesGoingThroughThisNode > 0) {
+          return -100 * d.ProbesGoingThroughThisNode;
         }
         return 1;
       } else {
@@ -127,6 +129,7 @@ function LoadGraph() {
   var gnode = svg.selectAll('g.gnode').data(graph_data.nodes).enter().append("g")
     .attr("class","gnode")
     .classed("AS", function(d) { return d.NodeType === 'AS' })
+    .classed("IXP", function(d) { return d.NodeType === 'IXP' })
     .classed("Probe", function(d) { return d.NodeType === 'Probe' })
     .on("mousedown", function(d) {
       if (!d.selected) { // Don't deselect on shift-drag.
@@ -179,33 +182,34 @@ function LoadGraph() {
 
   var maxProbesCount = 0;
   graph_data.nodes.forEach( function(d) {
-    if( d.NodeType == 'AS' ) {
-      var ProbesCount = Math.max(d.ProbesFromThisAS, d.ProbesGoingThroughThisAS);
+    if( d.NodeType == 'AS' || d.NodeType == 'IXP' ) {
+      var ProbesCount = Math.max(d.ProbesFromThisAS, d.ProbesGoingThroughThisNode);
       if( ProbesCount > maxProbesCount ) maxProbesCount = ProbesCount;
     }
   });
 
   var node = gnode.append("circle")
-    .attr("id", function(d) { return 'node' + d.NodeID; })
+    .attr("id", function(d) { return 'node' + d.NodeType + d.NodeID; })
     .attr("r", function(d) {
       if(d.NodeType == 'Probe') {
         d.radius = 5;
+      } else if(d.NodeType == 'AS' && d.TargetAS ) {
+        d.radius = RADIUS * 2;
       } else {
-        if( d.TargetAS ) {
+        var ProbesCount;
+        if( d.NodeType == 'AS' )
+          ProbesCount = Math.max(d.ProbesFromThisAS, d.ProbesGoingThroughThisNode)
+        else
+          ProbesCount = d.ProbesGoingThroughThisNode;
+
+        d.radius = 0;
+
+        if( ProbesCount == 1 ) {
+          d.radius = RADIUS;
+        } else if ( ProbesCount >= maxProbesCount ) {
           d.radius = RADIUS * 2;
         } else {
-          var ProbesCount;
-          ProbesCount = Math.max(d.ProbesFromThisAS, d.ProbesGoingThroughThisAS);
-
-          d.radius = 0;
-
-          if( ProbesCount == 1 ) {
-            d.radius = RADIUS;
-          } else if ( ProbesCount >= maxProbesCount ) {
-            d.radius = RADIUS * 2;
-          } else {
-            d.radius = RADIUS + Math.floor( RADIUS / maxProbesCount * ProbesCount );
-          }
+          d.radius = RADIUS + Math.floor( RADIUS / maxProbesCount * ProbesCount );
         }
       }
 
@@ -215,14 +219,20 @@ function LoadGraph() {
     .style("stroke-dasharray", function(d) {
       if(d.NodeType == 'Probe') { return null }
 
-      if( d.ProbesFromThisAS == 0 && d.ProbesGoingThroughThisAS > 0 ) {
-        return '5,5';
-      } else {
-        return null;
+      if(d.NodeType == 'IXP') {
+        if( d.ProbesGoingThroughThisNode > 0 )
+          return '5,5';
       }
+
+      if(d.NodeType == 'AS') {
+        if( d.ProbesFromThisAS == 0 && d.ProbesGoingThroughThisNode > 0 )
+          return '5,5';
+      }
+
+      return null;
     })
     .style("stroke", function(d,i) {
-      if(d.NodeType == 'AS') {
+      if(d.NodeType == 'AS' || d.NodeType == 'IXP') {
         if(!('color' in d)) {
           d.color = colors(i);
         }
@@ -234,7 +244,7 @@ function LoadGraph() {
         return d.color;
       }
 
-      if(d.NodeType == 'AS') {
+      if(d.NodeType == 'AS' || d.NodeType == 'IXP') {
         d.color = colors(i);
       } else {
         d.color = rtt_colors_nodata;
@@ -265,17 +275,27 @@ function LoadGraph() {
         } else {
           s += 'Path NOT completed';
         }
+
+      } else if (d.NodeType == 'IXP') {
+        s = 'IXP ' + d.IXPName;
+
+        if( d.ASN )
+          s = s + '\n' + 'AS' + d.ASN;
+
+        if( d.ProbesGoingThroughThisNode > 0 ) {
+          s = s + '\n' + d.ProbesGoingThroughThisNode + ' probes transit through this IXP';
+        }
       } else {
 
         s = d.ASN + ' - ' + d.Holder;
-        if( d.ProbesFromThisAS == 0 && d.ProbesGoingThroughThisAS > 0 ) {
+        if( d.ProbesFromThisAS == 0 && d.ProbesGoingThroughThisNode > 0 ) {
           s = s + '\nno probes from this AS, transit only';
         }
         if( d.ProbesFromThisAS > 0 ) {
           s = s + '\n' + d.ProbesFromThisAS + ' probes from this AS';
         }
-        if( d.ProbesGoingThroughThisAS > 0 ) {
-          s = s + '\n' + d.ProbesGoingThroughThisAS + ' probes transit through this AS';
+        if( d.ProbesGoingThroughThisNode > 0 ) {
+          s = s + '\n' + d.ProbesGoingThroughThisNode + ' probes transit through this AS';
         }
         if( d.TargetAS ) {
           s = s + '\nTarget AS';
@@ -288,7 +308,7 @@ function LoadGraph() {
       return s;
     });
 
-  var labels = svg.selectAll(".AS").append("text")
+  svg.selectAll(".AS").append("text")
     .text(function(d) {
       if(d.NodeType == 'AS') { return d.ASN }
       return null;
@@ -298,6 +318,15 @@ function LoadGraph() {
     .style("font-weight", function(d){
       if( d.NodeType == 'AS' && d.TargetAS ) return "bold";
     })
+    .style("font-size","10px");
+
+  svg.selectAll(".IXP").append("text")
+    .text(function(d) {
+      if(d.NodeType == 'IXP') { return d.IXPName }
+      return null;
+    })
+    .attr("y", function(d) { return d.radius+10 } )
+    .style("text-anchor", "middle")
     .style("font-size","10px");
 
   force.on("tick", function tick() {

@@ -1,21 +1,35 @@
 // nodes
 function Node(nodeType,nodeID) {
   this.NodeType = nodeType;
-  this.NodeID = nodeType + nodeID;
+  this.NodeID = nodeID;
 }
 
+function TransitNode(nodeType,nodeID) {
+  Node.call(this,nodeType,nodeID);
+  this.ProbesGoingThroughThisNode = 0;
+}
+TransitNode.prototype = Object.create(Node);
+TransitNode.prototype.constructor = Node;
+
 function AS(asn) {
-  Node.call(this, 'AS', asn);
+  TransitNode.call(this, 'AS', asn);
   this.ASN = asn;
   this.Holder = null;
   this.ProbesFromThisAS = 0;
-  this.ProbesGoingThroughThisAS = 0;
   this.Isolated = true;
   this.TargetAS = false;
   this.BestPathTowardATarget = null;
 }
-AS.prototype = Object.create(Node.prototype);
+AS.prototype = Object.create(TransitNode.prototype);
 AS.prototype.constructor = AS;
+
+function IXP(name) {
+  TransitNode.call(this, 'IXP', name);
+  this.IXPName = name;
+  this.ASN = null;
+}
+IXP.prototype = Object.create(TransitNode.prototype);
+IXP.prototype.constructor = IXP;
 
 function Probe(prb_id,source_asn) {
   Node.call(this, 'Probe', prb_id);
@@ -30,8 +44,8 @@ Probe.prototype.constructor = Probe;
 // links
 function Link(linkType) {
   this.LinkType = linkType;
-  this.source = null;
-  this.target = null;
+  this.source = null; // idx of GraphData.nodes
+  this.target = null; // idx of GraphData.nodes
 }
 
 function ASPath(asn_a,asn_b) {
@@ -44,7 +58,7 @@ ASPath.prototype = Object.create(Link.prototype);
 ASPath.prototype.constructor = ASPath;
 
 function ProbeLink() {
-  Link.call(this,'Probe');
+  Link.call(this,'ProbeLink');
 }
 ProbeLink.prototype = Object.create(Link.prototype);
 ProbeLink.prototype.constructor = ProbeLink();
@@ -54,11 +68,12 @@ function GraphData(MsmID) {
   this.MsmInfo = null;
   this.nodes = [];
   this.links = [];
+  this.as_paths = [];
 
-  this.indexOfASN = function(asn) {
+  this.indexOf = function(node_id, node_class) {
     for(var n = 0; n <= this.nodes.length-1; n++) {
-      if(this.nodes[n] instanceof AS) {
-        if(this.nodes[n].ASN===asn) {
+      if(this.nodes[n] instanceof node_class) {
+        if(this.nodes[n].NodeID===node_id) {
           return n;
         }
       }
@@ -66,15 +81,20 @@ function GraphData(MsmID) {
     return -1;
   }
 
+  this.indexOfASN = function(asn) {
+    return this.indexOf(asn, AS);
+  }
+
   this.indexOfProbe = function(prb_id) {
-    for(var n = 0; n <= this.nodes.length-1; n++) {
-      if(this.nodes[n] instanceof Probe) {
-        if(this.nodes[n].ProbeID===prb_id) {
-          return n;
-        }
-      }
-    }
-    return -1;
+    return this.indexOf(prb_id, Probe);
+  }
+
+  this.indexOfIXP = function(name) {
+    return this.indexOf(name, IXP);
+  }
+
+  this.indexOfNode = function(node) {
+    return this.indexOf(node.NodeID, node.constructor);
   }
 
   this.getAS = function(asn) {
@@ -87,12 +107,20 @@ function GraphData(MsmID) {
     return newAS;
   }
 
+  this.getIXP = function(name) {
+    var idx = this.indexOfIXP(name);
+    if( idx >= 0 ) {
+      return this.nodes[idx];
+    }
+    var newIXP = new IXP(name);
+    this.nodes.push(newIXP);
+    return newIXP;
+  }
+
   this.indexOfASPath = function(asn_a,asn_b) {
-    for(var l = 0; l <= this.links.length-1; l++) {
-      if(this.links[l] instanceof ASPath) {
-        if(this.links[l].Source_ASN===asn_a && this.links[l].Target_ASN===asn_b) {
-          return l;
-        }
+    for(var l = 0; l <= this.as_paths.length-1; l++) {
+      if(this.as_paths[l].Source_ASN===asn_a && this.as_paths[l].Target_ASN===asn_b) {
+        return l;
       }
     }
     return -1;
@@ -101,18 +129,37 @@ function GraphData(MsmID) {
   this.addASPath = function(asn_a,asn_b) {
     var idx = this.indexOfASPath(asn_a,asn_b);
     if( idx >= 0 ) {
-      return this.links[idx];
+      return this.as_paths[idx];
     }
 
-    var newLink = new ASPath(asn_a,asn_b);
-    newLink.source = this.indexOfASN(asn_a);
-    if( newLink.source < 0 ) {
+    var newASPath = new ASPath(asn_a,asn_b);
+    newASPath.source = this.indexOfASN(asn_a);
+    if( newASPath.source < 0 ) {
       throw "Can't add the path: source ASN not found (" + asn_a + ")";
     }
-    newLink.target = this.indexOfASN(asn_b);
-    if( newLink.target < 0 ) {
+    newASPath.target = this.indexOfASN(asn_b);
+    if( newASPath.target < 0 ) {
       throw "Can't add the path: target ASN not found (" + asn_b + ")";
     }
+    this.as_paths.push(newASPath);
+    return newASPath;
+  }
+
+  this.addDataPath = function(node_a,node_b) {
+    var idx_a = this.indexOfNode(node_a);
+    if( idx_a < 0 ) {
+      throw "Can't add the path: source node not found";
+    }
+
+    var idx_b = this.indexOfNode(node_b);
+    if( idx_b < 0 ) {
+      throw "Can't add the path: target node not found";
+    }
+
+    var newLink = new Link('DataPath');
+    newLink.source = idx_a;
+    newLink.target = idx_b;
+    
     this.links.push(newLink);
     return newLink;
   }
@@ -140,7 +187,7 @@ function GraphData(MsmID) {
     return newProbe;
   }
 
-  this.getASBestPathTowardATarget = function(asn,exclude_list,depth) {
+  this.getBestPathTowardATarget = function(asn,exclude_list,depth) {
     if( depth > 100 ) throw 'Too much, maybe something went wrong.';
 
     var asn_idx = this.indexOfASN(asn);
@@ -157,13 +204,11 @@ function GraphData(MsmID) {
 
     var paths = [];
     var new_exclude_list = exclude_list.concat(asn);
-    for( var link_idx = 0; link_idx <= this.links.length-1; link_idx++ ) {
-      var l = this.links[link_idx];
-      if( l.LinkType == 'AS' ) {
-        if( l.Source_ASN == asn ) {
-          if( new_exclude_list.indexOf(l.Target_ASN) < 0 ) {
-            paths.push( [asn].concat( this.getASBestPathTowardATarget(l.Target_ASN,new_exclude_list,depth+1) ) );
-          }
+    for( var as_path_idx = 0; as_path_idx <= this.as_paths.length-1; as_path_idx++ ) {
+      var l = this.as_paths[as_path_idx];
+      if( l.Source_ASN == asn ) {
+        if( new_exclude_list.indexOf(l.Target_ASN) < 0 ) {
+          paths.push( [asn].concat( this.getBestPathTowardATarget(l.Target_ASN,new_exclude_list,depth+1) ) );
         }
       }
     }

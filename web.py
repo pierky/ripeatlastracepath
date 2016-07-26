@@ -34,22 +34,27 @@ def getIPDetails():
   global cache
   global requests
 
+  ip_addresses = request.json['ip_addresses']
+  request_id = request.json['request_id']
+
+  requests[request_id] = {}
+  requests[request_id]['status'] = 'init_cache'
+
   var = "%s/var" % BASE_DIR
 
   if not cache:
     try:
-      cache = IPDetailsCache(MAX_CACHE = 604800, Debug = DEBUG,
+      cache = IPDetailsCache(MAX_CACHE=604800, Debug=DEBUG,
                              IP_ADDRESSES_CACHE_FILE="%s/ip_addr.cache" % var,
                              IP_PREFIXES_CACHE_FILE="%s/ip_pref.cache" % var)
+      cache.UseIXPs(WhenUse=2, IXP_CACHE_FILE="%s/ixps.cache" % var,
+                    MAX_CACHE=604800)
     except:
       return jsonify({"error":"Can't load IP addresses cache files; "
                               "please ensure they have proper r/w "
                               "permissions for the running process."})
 
-  ip_addresses = request.json['ip_addresses']
-  request_id = request.json['request_id']
-
-  requests[request_id] = {}
+  requests[request_id]['status'] = 'fetching_ip_info'
   requests[request_id]['cnt'] = len(ip_addresses)
   requests[request_id]['done'] = 0
 
@@ -67,7 +72,7 @@ def getProgress():
   if request_id in requests:
     return jsonify(requests[request_id])
   else:
-    return jsonify({'cnt':0,'done':0})
+    return jsonify({'status':'init_cache', 'cnt':0,'done':0})
 
 if __name__ == '__main__':
   ripeatlastracepathapp.debug = DEBUG

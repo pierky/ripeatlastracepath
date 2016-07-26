@@ -17,7 +17,7 @@ function GUI_Error(s) {
   }
 }
 
-function GUI_LoadingMsm(loading,cnt,done) {
+function GUI_LoadingMsm(loading,status_id,cnt,done) {
   $('#load_msm_btn').prop('disabled',loading);
   $('#loadgraph_btn').prop('disabled',loading);
   $('#options_btn').prop('disabled',loading);
@@ -31,10 +31,14 @@ function GUI_LoadingMsm(loading,cnt,done) {
   if(loading) {
     $('#help').hide();
 
-    if( !cnt )
+    if( !status_id )
       $('#info_text').text('Loading measurement...');
-    else
-      $('#info_text').text('Analysing IP address ' + done + '/' + cnt + '...');
+    else {
+      if( status_id=='init_cache' )
+        $('#info_text').text('Initializing cache for IP addresses and IXPs info...');
+      else
+        $('#info_text').text('Analysing IP address ' + done + '/' + cnt + '...');
+    }
 
     var perc;
     if( done > 0 )
@@ -60,9 +64,7 @@ function GUI_UpdateProgress() {
     data: {'request_id':request_id},
     type: 'GET',
     success: function(d) {
-      if( d['cnt'] > 0 ) {
-        GUI_LoadingMsm(true,d['cnt'],d['done']);
-      }
+      GUI_LoadingMsm(true, d['status'], d['cnt'], d['done']);
     }
   });
 }
@@ -318,8 +320,9 @@ function GUI_DoLoadMsm() {
             var dest_ip_addr = prb_response['dst_addr'];
 
             var asn;
-            var as;
-            var last_asn;
+            var curr_node;
+            var last_node;
+            var last_as;
             var last_probe;
 
             // source AS
@@ -330,15 +333,15 @@ function GUI_DoLoadMsm() {
               continue
             }
 
-            as = graph_data.getAS(asn);
-            as.Holder = ip_details[from_ip_addr].Holder;
-            as.ProbesFromThisAS += 1;
+            curr_node = graph_data.getAS(asn);
+            curr_node.Holder = ip_details[from_ip_addr].Holder;
+            curr_node.ProbesFromThisAS += 1;
 
+            s += 'from ' + from_ip_addr + ' - AS' + asn + ' (' + curr_node.Holder + ')\n';
+
+            last_as = curr_node;
+            last_node = curr_node;
             last_probe = graph_data.addProbe(prb_response['prb_id'],asn);
-
-            s += 'from ' + from_ip_addr + ' - AS' + asn + ' (' + as.Holder + ')\n';
-
-            last_asn = asn;
 
             if( 'result' in prb_response ) {
 
@@ -365,16 +368,39 @@ function GUI_DoLoadMsm() {
                         s += 'no RTT';
                       }
 
-                      if( /^\d+$/.test(asn) ) {
-                        if( asn != last_asn ) {
-                          // only consider the first usable packet for each hop to determine ASN;
-                          as = graph_data.getAS(asn)
-                          as.Holder = ip_details[ip_addr].Holder;
-                          as.ProbesGoingThroughThisAS += 1;
-                          graph_data.addASPath(last_asn,asn);
-                          last_asn = asn;
+                      if( ip_details[ip_addr].IsIXP ) {
+                        curr_node = graph_data.getIXP(ip_details[ip_addr].IXPName);
 
-                          s += ' - AS' + asn + ' (' + as.Holder + ')\n';
+                        if( curr_node != last_node ) {
+                          // only consider the first usable packet for each hop to determine new node
+                          if( /^\d+$/.test(asn) )
+                            curr_node.ASN = asn;
+                          curr_node.ProbesGoingThroughThisNode += 1;
+                          graph_data.addDataPath(last_node,curr_node);
+                          last_node = curr_node;
+                        }
+
+                        if( /^\d+$/.test(asn) )
+                          s += ' - IXP ' + curr_node.IXPName + ' (AS' + asn +')\n'
+                        else
+                          s += ' - IXP ' + curr_node.IXPName + '\n';
+
+                      } else if( /^\d+$/.test(asn) ) {
+                        curr_node = graph_data.getAS(asn);
+
+                        if( curr_node != last_node ) {
+                          // only consider the first usable packet for each hop to determine new node
+                          curr_node.Holder = ip_details[ip_addr].Holder;
+                          curr_node.ProbesGoingThroughThisNode += 1;
+                          graph_data.addDataPath(last_node,curr_node);
+                          last_node = curr_node;
+
+                          if( curr_node != last_as ) {
+                            graph_data.addASPath(last_as.ASN, curr_node.ASN);
+                            last_as = curr_node;
+                          }
+
+                          s += ' - AS' + asn + ' (' + curr_node.Holder + ')\n';
                         } else {
                           s += ' - AS' + asn + '\n';
                         }
@@ -432,7 +458,7 @@ function GUI_DoLoadMsm() {
 
           graph_data.nodes.forEach(function(n){
             if( n.NodeType == 'AS' ) {
-              if( graph_data.getASBestPathTowardATarget(n.ASN,[],1) ) {
+              if( graph_data.getBestPathTowardATarget(n.ASN,[],1) ) {
                 n.Isolated = false;
               }
             }
@@ -619,8 +645,6 @@ $( document ).ready(function() {
             $('#newrelease').attr( 'href', Results['new_release']['url'] );
             $('#newrelease').attr( 'title', NewReleaseTitle );
             $('#newrelease').show();
-          } else {
-            console.log(Results);
           }
         },
         error: function( ErrMsg ) {
