@@ -2,7 +2,7 @@
 # Licensed under The MIT License (MIT) - http://opensource.org/licenses/MIT
 
 from flask import Flask, request, jsonify, render_template
-from ipdetailscache import IPDetailsCache
+from pierky.ipdetailscache import IPDetailsCache
 import os
 from config import *
 

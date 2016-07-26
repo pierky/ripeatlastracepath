@@ -21,21 +21,13 @@ Yes, Python 2.7 (probably it's already on your system).
 
 - More details: https://docs.python.org/2/
 
-### Flask
+### Other modules
 
-The web front-end has been written within the [Flask](http://flask.pocoo.org/) 0.10.1 framework.
+You can run
 
-- One step installation: `pip install Flask`
+ `pip install -r requirements.txt`
 
-- More details: http://flask.pocoo.org/docs/0.10/installation/
-
-### ipaddr library
-
-The [ipdetailscache](https://github.com/pierky/ipdetailscache) library, here included, requires [ipaddr](https://github.com/google/ipaddr-py).
-
-- One step installation: `pip install ipaddr`
-
-- More details: https://github.com/google/ipaddr-py
+to install dependencies.
 
 ## Installation
 
@@ -138,6 +130,6 @@ Have a bug? Please create an issue here on GitHub at https://github.com/pierky/r
 
 ## Author
 
-Pier Carlo Chiodi - http://www.pierky.com/
+Pier Carlo Chiodi - https://www.pierky.com/
 
-Blog: http://blog.pierky.com Twitter: <a href="http://twitter.com/pierky">@pierky</a>
+Blog: https://blog.pierky.com Twitter: <a href="http://twitter.com/pierky">@pierky</a>
