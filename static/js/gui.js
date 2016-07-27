@@ -333,7 +333,7 @@ function GUI_DoLoadMsm() {
               continue
             }
 
-            curr_node = graph_data.getAS(asn);
+            curr_node = graph_data.addAS(asn);
             curr_node.Holder = ip_details[from_ip_addr].Holder;
             curr_node.ProbesFromThisAS += 1;
 
@@ -342,6 +342,7 @@ function GUI_DoLoadMsm() {
             last_as = curr_node;
             last_node = curr_node;
             last_probe = graph_data.addProbe(prb_response['prb_id'],asn);
+            last_probe.Path.push(last_as.NodeIdx);
 
             if( 'result' in prb_response ) {
 
@@ -369,7 +370,7 @@ function GUI_DoLoadMsm() {
                       }
 
                       if( ip_details[ip_addr].IsIXP ) {
-                        curr_node = graph_data.getIXP(ip_details[ip_addr].IXPName);
+                        curr_node = graph_data.addIXP(ip_details[ip_addr].IXPName);
 
                         if( curr_node != last_node ) {
                           // only consider the first usable packet for each hop to determine new node
@@ -378,6 +379,7 @@ function GUI_DoLoadMsm() {
                           curr_node.ProbesGoingThroughThisNode += 1;
                           graph_data.addDataPath(last_node,curr_node);
                           last_node = curr_node;
+                          last_probe.Path.push(curr_node.NodeIdx);
                         }
 
                         if( /^\d+$/.test(asn) )
@@ -386,7 +388,7 @@ function GUI_DoLoadMsm() {
                           s += ' - IXP ' + curr_node.IXPName + '\n';
 
                       } else if( /^\d+$/.test(asn) ) {
-                        curr_node = graph_data.getAS(asn);
+                        curr_node = graph_data.addAS(asn);
 
                         if( curr_node != last_node ) {
                           // only consider the first usable packet for each hop to determine new node
@@ -394,6 +396,7 @@ function GUI_DoLoadMsm() {
                           curr_node.ProbesGoingThroughThisNode += 1;
                           graph_data.addDataPath(last_node,curr_node);
                           last_node = curr_node;
+                          last_probe.Path.push(curr_node.NodeIdx);
 
                           if( curr_node != last_as ) {
                             graph_data.addASPath(last_as.ASN, curr_node.ASN);

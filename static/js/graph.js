@@ -2,6 +2,7 @@ var RADIUS = 10;
 var svg = null;
 var force = null;
 var shiftKey;
+var selectedProbe;
 var rtt_colors = [
   { rtt: 10, color:'#338e5c' },
   { rtt: 20, color:'#669d52' },
@@ -43,19 +44,29 @@ function LoadGraph() {
       .attr("id", "svg")
       .attr("width", width)
       .attr("height", height);
-  svg.append("svg:defs")
-    .append("svg:marker")
-      .attr("id", "arrow")
-      .attr("refX", 40)
-      .attr("refY", 0)
-      .attr("viewBox", "0 -5 10 10")
-      .attr("fill", "#eee")
-      .attr("markerWidth", RADIUS)
-      .attr("markerHeight", RADIUS)
-      .attr("markerUnits", "userSpaceOnUse")
-      .attr("orient", "auto")
-      .append("svg:path")
-        .attr("d", "M0,-5 L10,0 L0,5");
+
+  svg.append("rect")
+    .attr("width", "100%")
+    .attr("height", "100%")
+    .attr("fill", "white");
+
+  function append_arrow(id, color) {
+    svg.append("svg:defs")
+      .append("svg:marker")
+        .attr("id", id)
+        .attr("refX", 40)
+        .attr("refY", 0)
+        .attr("viewBox", "0 -5 10 10")
+        .attr("fill", color)
+        .attr("markerWidth", RADIUS)
+        .attr("markerHeight", RADIUS)
+        .attr("markerUnits", "userSpaceOnUse")
+        .attr("orient", "auto")
+        .append("svg:path")
+          .attr("d", "M0,-5 L10,0 L0,5");
+  }
+  append_arrow('arrow', '#eee');
+  append_arrow('arrow_selected', '#FF0000');
 
   var link = svg.append("g")
     .attr("class", "link")
@@ -151,7 +162,11 @@ function LoadGraph() {
         .each(function(d) {
           d.fixed = false;
         })
-
+    })
+    .on("click", function(d) {
+      if( d.NodeType == 'Probe' ) {
+        selectedProbe = d;
+      }
     })
     .call(d3.behavior.drag()
       .on("dragstart", function(d1) {
@@ -179,6 +194,35 @@ function LoadGraph() {
           .each(function(d) { d.fixed &= ~6; })
       })
     );
+
+  svg.on("click", function() {
+    link.each(function(l) {
+      d3.select(this).classed("selected", false);
+      if( l.LinkType == 'DataPath' )
+        d3.select(this).attr("marker-end", "url(#arrow)");
+    });
+
+    if( selectedProbe ) {
+      link.filter(function(l) {
+        if( l.LinkType == 'DataPath' ) {
+          for( var node_idx=0; node_idx <= selectedProbe.Path.length - 2; node_idx++ ) {
+            if( l.source.NodeIdx == selectedProbe.Path[node_idx] && l.target.NodeIdx == selectedProbe.Path[node_idx+1] )
+              return true;
+          }
+        } else if ( l.LinkType == 'ProbeLink' ) {
+          return l.source.NodeIdx == selectedProbe.NodeIdx && l.target.NodeIdx == selectedProbe.Path[0];
+        }
+        return false;
+      })
+      .each(function(l) {
+        d3.select(this).classed("selected", true);
+        if ( l.LinkType == 'DataPath' )
+          d3.select(this).attr("marker-end", "url(#arrow_selected)");
+      });
+    }
+
+    selectedProbe = null;
+  });
 
   var maxProbesCount = 0;
   graph_data.nodes.forEach( function(d) {
