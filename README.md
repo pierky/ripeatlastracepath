@@ -1,10 +1,10 @@
 # RIPE Atlas Tracepath
 
-A JavaScript/Python web-app which reads results from RIPE Atlas traceroute measurements (both IPv4 and IPv6) and shows the Autonomous Systems that probes traverse to reach the target.
+A JavaScript/Python web-app which reads results from RIPE Atlas traceroute measurements (both IPv4 and IPv6) and shows the Autonomous Systems and Internet Exchange Points that probes traverse to reach the target.
 
 ## Overview
 
-Given a [RIPE Atlas](https://atlas.ripe.net/) traceroute measurement, it builds a graph with all the Autonomous Systems traversed by probes and shows their average RTT toward the target.
+Given a [RIPE Atlas](https://atlas.ripe.net/) traceroute measurement, it builds a graph with all the ASs and IXPs traversed by probes and shows their average RTT toward the target.
 Graphs can be saved in JSON format and loaded later for further analysis, or they can be exported as PNG images.
 
 ![Example](https://raw.github.com/pierky/ripeatlastracepath/master/example.png)
