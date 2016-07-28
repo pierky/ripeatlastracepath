@@ -1,3 +1,6 @@
+// Copyright (c) 2016 Pier Carlo Chiodi - https://www.pierky.com
+// Licensed under The MIT License (MIT) - http://opensource.org/licenses/MIT
+
 var graph_data = null;    // Used to build the graph. D3 modifies/adds some elements
                           // to build the graph.
 var currOrigData = null;  // Contains the original graph_data used to build the graph.

@@ -1,3 +1,6 @@
+// Copyright (c) 2016 Pier Carlo Chiodi - https://www.pierky.com
+// Licensed under The MIT License (MIT) - http://opensource.org/licenses/MIT
+
 // nodes
 function Node(nodeType,nodeID) {
   this.NodeType = nodeType;

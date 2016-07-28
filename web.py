@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Pier Carlo Chiodi - http://www.pierky.com
+# Copyright (c) 2016 Pier Carlo Chiodi - https://www.pierky.com
 # Licensed under The MIT License (MIT) - http://opensource.org/licenses/MIT
 
 from flask import Flask, request, jsonify, render_template
@@ -6,7 +6,7 @@ from pierky.ipdetailscache import IPDetailsCache
 import os
 from config import *
 
-CURRENT_RELEASE = "v0.3.1"
+CURRENT_RELEASE = "v0.4.0"
 
 ripeatlastracepathapp = Flask(__name__)
 

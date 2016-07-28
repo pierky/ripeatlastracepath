@@ -9,6 +9,18 @@
 <script type=text/javascript>
 	$DEMO = false;
 
+	// Demo data in static/ directory.
+	//
+	// - getIPDetails-demo.json
+	//	to update this file print the result of the AJAX call to getIPDetailsURL:
+	//
+	//		success: function(ip_details) {
+	//		  console.log(JSON.stringify(ip_details));
+	//		  ...
+	//
+	// - graph_data-demo.json
+	//	a saved graph
+
 	$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 	$CURRENT_RELEASE = '{{ CURRENT_RELEASE }}';
 {% if CHECKUPDATES_ENABLE %}
@@ -181,9 +193,16 @@ body {
 			<li>Hit the <b>Load measurement</b> button and wait until the results are loaded and the graph displayed.</li>
 		</ul>
 		Once the graph has been shown you can adjust probes' and ASes' position by moving them on the canvas; multiple selection allowed using the <kbd>shift</kbd> key. Double click on an AS or probe to restore its default position.<br>
+		Click on a probe to highlight its path toward the target.<br>
 		You can save the graph using the <b>Save graph</b> button, exporting it as a PNG image or JSON blob, and import it later using the <b>Load graph</b> button.<br>
 		<br>
 		Options are available to show/hide probes and text results.
+
+		<h2>Data source</h2>
+		<ul>
+			<li>IP addresses information are taken from <a href="https://stat.ripe.net/" target="_blank">RIPE Stat</a>.</li>
+			<li>Internet Exchange Points information are taken from <a href="https://www.peeringdb.com/" target="_blank">PeeringDB</a>.</li>
+		</ul>
 
 		<h2>Links</h2>
 		<ul>
