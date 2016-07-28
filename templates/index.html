@@ -164,11 +164,11 @@ body {
 		<div align=center><span id=graphdatatext></span></div>
 		<textarea id=graphdata style="WIDTH: 90%; HEIGHT: 300px" placeholder="Paste graph's JSON blob here"></textarea>
 		<br>
-		<button class="btn btn-default" onclick="GUI_DoSavePNG()" type="button" id="savepng_btn">
+		<button class="btn btn-default btn-primary" onclick="GUI_DoSavePNG()" type="button" id="savepng_btn">
 			<span class="glyphicon glyphicon-picture"></span>
 			Export as PNG
 		</button>
-		<button class="btn btn-default" onclick="GUI_DoLoadGraphFromText()" id="loadgraphfromjson_btn">Load graph from JSON above</button>
+		<button class="btn btn-default btn-primary" onclick="GUI_DoLoadGraphFromText()" id="loadgraphfromjson_btn">Load graph from JSON above</button>
 		<button class="btn btn-default" onclick="GUI_DoCloseLoadGraph()">Close</button>
 		<div style="display:none" id="svgdataurl"></div>
 		<div style="display:none" id="pngdataurl"></div>
