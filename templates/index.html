@@ -9,16 +9,18 @@
 <script type=text/javascript>
 	$DEMO = false;
 
+	// DEMO_MEASUREMENTS in gui.js contains a list of demo measurements.
+	//
 	// Demo data in static/ directory.
 	//
-	// - getIPDetails-demo.json
+	// - demo_<msm_id>_ip.json
 	//	to update this file print the result of the AJAX call to getIPDetailsURL:
 	//
 	//		success: function(ip_details) {
 	//		  console.log(JSON.stringify(ip_details));
 	//		  ...
 	//
-	// - graph_data-demo.json
+	// - demo_<msm_id>_graph.json
 	//	a saved graph
 
 	$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
@@ -177,9 +179,25 @@ body {
 		<div id="help" class="col-lg-12">
 		<h1>RIPE Atlas Tracepath</h1>
 		<span class="demomsgs">
-			This is a demo version of RIPE Atlas Tracepath, only measurement ID 1674977 can be used. Data and IP addresses details may be outdated.<br>
-			Hit the <b>Load graph</b> button to load a sample graph that has already been customized or push the <b>Load measurement</b> button to build it from scratch.<br>
+			This is a demo version of RIPE Atlas Tracepath, only some measurements can be used. Data and IP addresses details may be outdated.<br>
+			Chose one of the following demo measurements, hit the <b>Load graph</b> button to load a sample graph that has already been customized or push the <b>Load measurement</b> button to build it from scratch.<br>
 			To use the real version, <a href="https://github.com/pierky/ripeatlastracepath" target="_blank">download and install it</a>.<br>
+			<br>
+			Demo measurements:<br>
+
+			<div class="radio">
+				<label for="demomsm0">
+					<input type=radio name=demomsm class=demomsm_radiobnt id=demomsm0 value=0 checked>
+					Measurement 1674977, target www.ripe.net
+				</label>
+			</div>
+
+			<div class="radio">
+				<label for="demomsm1">
+					<input type=radio name=demomsm class=demomsm_radiobnt id=demomsm1 value=1>
+					Measurement 1115418, target k.root-servers.net
+				</label>
+			</div>
 		</span>
 
 		<h2>Usage</h2>

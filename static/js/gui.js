@@ -7,6 +7,9 @@ var currOrigData = null;  // Contains the original graph_data used to build the 
                           // It's used to save the graph without the additional 
                           // properties added by d3.
 
+var DEMO_MEASUREMENTS = [1674977, 1115418];
+var SELECTED_DEMO_MEASUREMENT = 0
+
 // Progress bar support
 var request_id;
 var tmrLoadingProgress;
@@ -275,7 +278,7 @@ function GUI_DoLoadMsm() {
       var getIPDetailsMethod;
       var getIPDetailsData;
       if( $DEMO ) {
-        getIPDetailsURL = $SCRIPT_ROOT + '/static/getIPDetails-demo.json';
+        getIPDetailsURL = $SCRIPT_ROOT + '/static/demo_' + DEMO_MEASUREMENTS[SELECTED_DEMO_MEASUREMENT] + '_ip.json';
         getIPDetailsMethod = 'GET';
         getIPDetailsData = null;
       } else {
@@ -569,22 +572,35 @@ function GUI_MsmInfo() {
   }
 }
 
+function GUI_PrepareDemoMsm(idx) {
+  SELECTED_DEMO_MEASUREMENT = idx;
+
+  msm_id = DEMO_MEASUREMENTS[SELECTED_DEMO_MEASUREMENT];
+
+  $('#msmid').val(msm_id);
+  $.ajax({
+    url: $SCRIPT_ROOT + '/static/demo_' + msm_id + '_graph.json',
+    contentType: 'application/json',
+    success: function(data) {
+      $('#graphdata').val(JSON.stringify(data));
+    }
+  });
+}
+
 $( document ).ready(function() {
   if( $DEMO ) {
-    $('#msmid').val(1674977);
     $('#msmid').prop('disabled',true);
     $('#apikey').val('');
     $('#apikey').prop('disabled',true);
-
-    $.ajax({
-      url: $SCRIPT_ROOT + '/static/graph_data-demo.json',
-      contentType: 'application/json',
-      success: function(data) {
-        $('#graphdata').val(JSON.stringify(data));
-      }
-    });
  
     $('.demomsgs').show();
+
+    $('.demomsm_radiobnt').on('click', function(event) {
+      var $target = $(event.currentTarget);
+      GUI_PrepareDemoMsm($target.val());
+    });
+
+    GUI_PrepareDemoMsm(0);
   }
 
   $('#curr_release').html($CURRENT_RELEASE);
