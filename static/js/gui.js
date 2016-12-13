@@ -135,7 +135,7 @@ function GUI_DoLoadGraphFromText() {
     graph_data = JSON.parse($('#graphdata').val());
 
     try {
-      LoadGraph();
+      LoadGraph(true);
       GUI_ToggleSVG(true);
       $('#help').hide();
       $('#text_result').html('');
@@ -474,7 +474,7 @@ function GUI_DoLoadMsm() {
           });
 
           $('#text_result').html( s.replace(/(?:\r\n|\r|\n)/g, '<br/>') );
-          LoadGraph();
+          LoadGraph(false);
           GUI_ToggleProbes();
 
           $('#savegraph_btn').prop('disabled',false);

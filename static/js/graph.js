@@ -20,7 +20,7 @@ var rtt_colors = [
 var rtt_colors_nodata = '#bbbbbb';
 var options = [];
 
-function LoadGraph() {
+function LoadGraph(fromSavedJSON) {
   currOrigData = JSON.parse(JSON.stringify(graph_data));
 
   GUI_ToggleSVG(true);
@@ -387,7 +387,9 @@ function LoadGraph() {
 
   });
 
-  GroupIsolatedNodes();
+  if(!fromSavedJSON) {
+    GroupIsolatedNodes();
+  }
 }
 
 function GroupIsolatedNodes() {
