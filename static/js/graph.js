@@ -18,6 +18,7 @@ var rtt_colors = [
   { rtt: 1000000, color:'#8c3232', lbl: '&gt; 300 ms' }
 ];
 var rtt_colors_nodata = '#bbbbbb';
+var probe_color_reached_target_as = '#338e5c';
 var options = [];
 
 function LoadGraph(fromSavedJSON) {
@@ -284,6 +285,16 @@ function LoadGraph(fromSavedJSON) {
           d.color = colors(i);
         }
         return d3.rgb(d.color).darker().toString();
+      } else {
+        if( !d.Completed ) {
+          if( d.Path.length > 0 ) {
+            var destNode = graph_data.nodes[d.Path[d.Path.length-1]];
+            if( (destNode.NodeType == 'AS') && (destNode.TargetAS) ) {
+              return probe_color_reached_target_as;
+            }
+          }
+          return d3.rgb(rtt_colors_nodata).darker().toString();
+        }
       }
     }) 
     .style("fill", function(d,i) {
@@ -321,6 +332,13 @@ function LoadGraph(fromSavedJSON) {
           }
         } else {
           s += 'Path NOT completed';
+          if( d.Path.length > 0 ) {
+            var destNode = graph_data.nodes[d.Path[d.Path.length-1]];
+            if( (destNode.NodeType == 'AS') && (destNode.TargetAS) ) {
+              s += '; target AS reached';
+            }
+          }
+
         }
 
       } else if (d.NodeType == 'IXP') {
