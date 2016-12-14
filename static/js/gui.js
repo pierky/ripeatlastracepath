@@ -675,4 +675,23 @@ $( document ).ready(function() {
       } );
     }, 1000 );
   }
+
+  if( ! $DEMO ) {
+    try {
+      var msmID = getParameterByName('msmid');
+      if( msmID ) {
+        if( /^\d+$/.test(msmID) ) {
+          $('#msmid').val(msmID);
+          GUI_DoLoadMsm();
+        }
+      }
+    } catch(e) {
+    }
+  }
 });
+
+// stolen from http://stackoverflow.com/a/5158301
+function getParameterByName(name) {
+  var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+  return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
