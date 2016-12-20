@@ -344,7 +344,10 @@ function GUI_DoLoadMsm() {
             curr_node.Holder = ip_details[from_ip_addr].Holder;
             curr_node.ProbesFromThisAS += 1;
 
-            s += 'from ' + from_ip_addr + ' - AS' + asn + ' (' + curr_node.Holder + ')\n';
+            s += 'from ' + from_ip_addr;
+            if( ip_details[from_ip_addr].HostName && (ip_details[from_ip_addr].HostName != 'unknown') )
+              s += ' [' + ip_details[from_ip_addr].HostName + ']';
+            s += ' - AS' + asn + ' (' + curr_node.Holder + ')\n';
 
             last_as = curr_node;
             last_node = curr_node;
@@ -369,7 +372,11 @@ function GUI_DoLoadMsm() {
                         last_probe.Completed = true;
                       }
 
-                      s += ip_addr + ' - ';
+                      s += ip_addr;
+                      if( ip_details[ip_addr].HostName && (ip_details[ip_addr].HostName != 'unknown') )
+                        s += ' [' + ip_details[ip_addr].HostName + ']';
+                      s += ' - ';
+
                       if( 'rtt' in prb_response['result'][hop]['result'][packet_idx] ) {
                         s += prb_response['result'][hop]['result'][packet_idx]['rtt'].toFixed(2) + ' ms';
                       } else {
