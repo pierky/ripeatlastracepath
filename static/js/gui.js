@@ -205,7 +205,7 @@ function GUI_DoLoadMsm() {
   GUI_LoadingMsm(true);
 
   $.ajax({
-    url: 'https://atlas.ripe.net/api/v1/measurement-latest/' + msm_id + '/',
+    url: 'https://atlas.ripe.net/api/v2/measurements/' + msm_id + '/latest/',
     data: {
       'key': api_key
     },
@@ -222,7 +222,8 @@ function GUI_DoLoadMsm() {
 
       var prb;
       for( prb in data ) {
-        var prb_response = data[prb][0];
+        var prb_response = data[prb];
+
         if( prb_response['type'] != 'traceroute' ) {
           GUI_Error('The given measurement is not for a traceroute.');
           GUI_LoadingMsm(false);
@@ -314,7 +315,7 @@ function GUI_DoLoadMsm() {
             }
             s += 'probe ' + prb + '\n';
 
-            var prb_response = data[prb][0];
+            var prb_response = data[prb];
             var from_ip_addr = prb_response['from'];
             if( from_ip_addr == '' ) {
               from_ip_addr = prb_response['src_addr'];
@@ -511,23 +512,23 @@ function GUI_WriteMsmInfo(data) {
 
   $('#msminfo_dl').empty();
 
-  AddDef( 'Measurement ID', data['msm_id'] );
+  AddDef( 'Measurement ID', data['id'] );
 
   if( 'description' in data )
     AddDef( 'Description', data['description'] );
 
   AddDef( 'Address family', 'IPv' + data['af']);
 
-  if( 'dst_name' in data ) {
-    AddDef( 'Target name', data['dst_name'] );
+  if( 'target' in data ) {
+    AddDef( 'Target name', data['target'] );
 
     if( 'resolve_on_probe' in data ) {
       AddDef( 'Resolve on probe', data['resolve_on_probe'] ? 'Yes' : 'No' );
     }
   }
 
-  if( 'dst_addr' in data ) {
-    AddDef( 'Target IP address', data['dst_addr'] );
+  if( 'target_ip' in data ) {
+    AddDef( 'Target IP address', data['target_ip'] );
   }
 
   if( 'participant_count' in data ) {
@@ -555,7 +556,7 @@ function GUI_MsmInfo() {
     $('#msminfo_btn').prop('disabled',true);
 
     $.ajax({
-      url: 'https://atlas.ripe.net/api/v1/measurement/' + msm_id + '/',
+      url: 'https://atlas.ripe.net/api/v2/measurements/' + msm_id + '/',
       dataType: 'jsonp',
       timeout: 15000,
       error: function() {
