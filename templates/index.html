@@ -40,6 +40,7 @@
 {% endif %}
 </script>
 <script src="static/js/jquery/jquery-2.1.4.min.js"></script>
+<script src="static/js/jquery/jquery-ui.min.js"></script>
 <script src="static/js/d3/d3.js"></script>
 <script src="static/js/graph_data.js"></script>
 <script src="static/js/gui.js"></script>
@@ -75,6 +76,35 @@ body {
 .demomsgs {
 	display: none;
 	color: red;
+}
+
+#graph_div {
+	position: relative;
+}
+
+canvas {
+	position: absolute;
+	z-index: 1
+}
+
+.traceroute_details {
+	position: absolute;
+	z-index: 2;
+}
+
+/* stolen from http://stackoverflow.com/a/18294634 */
+.popover-title {
+	cursor: move; /* fallback if grab cursor is unsupported */
+	cursor: grab;
+	cursor: -moz-grab;
+	cursor: -webkit-grab;
+}
+
+ /* (Optional) Apply a "closed-hand" cursor during drag operation. */
+.popover-title:active {
+	cursor: grabbing;
+	cursor: -moz-grabbing;
+	cursor: -webkit-grabbing;
 }
 
 /* Graph

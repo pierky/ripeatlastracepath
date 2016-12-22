@@ -20,11 +20,14 @@ var rtt_colors = [
 var rtt_colors_nodata = '#bbbbbb';
 var probe_color_reached_target_as = '#338e5c';
 var options = [];
+var dragging = false;
+var details_tmr;
 
 function LoadGraph(fromSavedJSON) {
   currOrigData = JSON.parse(JSON.stringify(graph_data));
 
   GUI_ToggleSVG(true);
+  $('.popover').popover('hide');
   
   if(svg) {
     svg.remove();
@@ -147,6 +150,7 @@ function LoadGraph(fromSavedJSON) {
     .classed("IXP", function(d) { return d.NodeType === 'IXP' })
     .classed("Probe", function(d) { return d.NodeType === 'Probe' })
     .on("mousedown", function(d) {
+      dragging = false;
       if (!d.selected) { // Don't deselect on shift-drag.
         if (!shiftKey) {
           gnode.classed("selected", function(p){
@@ -161,6 +165,8 @@ function LoadGraph(fromSavedJSON) {
       if (d.selected && shiftKey) d3.select(this).classed("selected", d.selected = false);
     })
     .on("dblclick", function(d) {
+      clearTimeout(details_tmr);
+      details_tmr = null;
       gnode
         .filter(function(d) { return d.selected; })
         .each(function(d) {
@@ -170,6 +176,14 @@ function LoadGraph(fromSavedJSON) {
     .on("click", function(d) {
       if( d.NodeType == 'Probe' ) {
         selectedProbe = d;
+        if( !dragging ) {
+          var clientX = d3.event.clientX;
+          var clientY = d3.event.clientY;
+          details_tmr = setTimeout(function() {
+            if(details_tmr)
+              GUI_ShowTraceroute(d.ProbeID, clientX, clientY);
+          }, 500);
+        }
       }
     })
     .call(d3.behavior.drag()
@@ -178,6 +192,7 @@ function LoadGraph(fromSavedJSON) {
         .each(function(d) { d.fixed |= 2; })
       })
       .on("drag", function(d1) {
+        dragging = true;
         gnode
           .filter(function(d) { return d.selected; })
           .each(function(d) {
