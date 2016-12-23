@@ -6,7 +6,7 @@ from pierky.ipdetailscache import IPDetailsCache
 import os
 from config import *
 
-CURRENT_RELEASE = "v0.4.0"
+CURRENT_RELEASE = "v0.5.0"
 
 ripeatlastracepathapp = Flask(__name__)
 
