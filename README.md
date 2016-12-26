@@ -116,6 +116,10 @@ Please consider security aspects of your network before installing RIPE Atlas Tr
 
 - Visit the URL configured in your Apache *WSGIScriptAlias* configuration statement (http://your_ip//ripeatlastracepath/ripeatlastracepath for example).
 
+## Docker image
+
+If you want to quickly take a peek at how this web-app works, you can use the [Docker image](https://hub.docker.com/r/pierky/ripeatlastracepath/) available on DockerHub.
+
 ## Third-party Libraries
 
 Part of this work is based on [D3.js](http://d3js.org/) library. Please see its web sites to verify browser compatibility.
