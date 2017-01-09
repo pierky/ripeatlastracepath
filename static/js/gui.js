@@ -169,6 +169,13 @@ function GUI_DoLoadGraphFromText() {
   }
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#The_.22Unicode_Problem.22
+function utf8_to_b64(str) {
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+    return String.fromCharCode('0x' + p1);
+  }));
+}
+
 function GUI_DoSavePNG() {
   // source: http://techslides.com/save-svg-as-an-image
   var html = d3.select("svg")
@@ -176,7 +183,7 @@ function GUI_DoSavePNG() {
         .attr("xmlns", "http://www.w3.org/2000/svg")
         .node().parentNode.innerHTML;
 
-  var imgsrc = 'data:image/svg+xml;base64,'+ btoa(html);
+  var imgsrc = 'data:image/svg+xml;base64,'+ utf8_to_b64(html);
   var img = '<img src="'+imgsrc+'">'; 
   d3.select("#svgdataurl").html(img);
 
