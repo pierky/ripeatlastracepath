@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Pier Carlo Chiodi - https://www.pierky.com
+# Copyright (c) 2017 Pier Carlo Chiodi - https://www.pierky.com
 # Licensed under The MIT License (MIT) - http://opensource.org/licenses/MIT
 
 from flask import Flask, request, jsonify, render_template
