@@ -22,6 +22,10 @@ BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 VAR_DIR     = "%s/var" % BASE_DIR
 
 # --------------------------------------------------------------
+# Enable saving graphs on the server.
+SERVERSIDE_SAVE_ENABLE=True     # True or False - case sensitive!
+
+# --------------------------------------------------------------
 # Automatically check for updates.
 # Enable a client-side script that checks for new releases
 # using GitHub API.

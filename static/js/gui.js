@@ -97,6 +97,12 @@ function GUI_DoSaveGraph() {
 
   $('#loadgraphfromjson_btn').hide();
   $('#savepng_btn').show();
+  $('#load_from_server_filename').hide();
+  $('#save_to_server_filename').show();
+  $('#load_from_server').hide();
+  $('#save_to_server').show();
+  $('#save_to_server_filename').val('');
+  GUI_UpdateServerSideGraphsList('save_to_server_files');
 
   $('#graphdata').val(JSON.stringify(currOrigData));
   GUI_ToggleSVG(false);
@@ -109,6 +115,7 @@ function GUI_ToggleSVG(show_graph) {
     $('#graphdataarea').toggle();
     if( svg )
       $('#svg').toggle();
+
   } else {
     if( show_graph ) {
       $('#graphdataarea').hide();
@@ -132,6 +139,12 @@ function GUI_DoLoadGraph() {
   $('.popover').popover('hide');
   $('#loadgraphfromjson_btn').show();
   $('#savepng_btn').hide();
+  $('#load_from_server_filename').show();
+  $('#save_to_server_filename').hide();
+  $('#load_from_server').show();
+  $('#save_to_server').hide();
+  GUI_UpdateServerSideGraphsList('load_from_server_filename');
+
   GUI_ToggleSVG(false);
 }
 
@@ -657,6 +670,10 @@ $( document ).ready(function() {
     $('#msmid').prop('disabled',true);
     $('#apikey').val('');
     $('#apikey').prop('disabled',true);
+    $('#load_from_server_filename').prop('disabled',true);
+    $('#save_to_server_filename').prop('disabled',true);
+    $('#save_to_server').prop('disabled',true);
+    $('#load_from_server').prop('disabled',true);
  
     $('.demomsgs').show();
 
@@ -949,5 +966,107 @@ function GUI_ShowTraceroute(probe_id, clientX, clientY) {
     }
     $('#' + div_id).css({top: clientY, left: clientX}).show();
     $('#' + div_id).popover("show");
+  });
+}
+
+function GUI_UpdateServerSideGraphsList(id) {
+  if( !$SERVERSIDE_SAVE_ENABLE )
+    return;
+
+  $('#' + id).empty();
+
+  if( $DEMO ) {
+    $('#' + id).append('<option>Graph name</option>');
+    return;
+  }
+
+  $.ajax({
+    url: $SCRIPT_ROOT + '/listGraphs',
+    type: 'GET',
+    success: function(d) {
+      if( d['error'] ) {
+        return;
+      }
+      d['files'].forEach(function(f) {
+        $('#' + id).append('<option value="' + f + '">' + f + '</option>');
+      });
+    }
+  });
+}
+
+function GUI_LoadSaveSuccess(s) {
+  $('#load_save_success').hide();
+
+  if(s) {
+    $('#load_save_success_text').html(s);
+    $('#load_save_success').show();
+    setTimeout(function() {
+      $('#load_save_success').hide();
+    }, 3000);
+  }
+}
+
+function GUI_SaveServerSide(overwrite) {
+  if( !$SERVERSIDE_SAVE_ENABLE )
+    return;
+
+  GUI_Error();
+  GUI_LoadSaveSuccess();
+
+  var filename = $('#save_to_server_filename').val();
+
+  $.ajax({
+    url: $SCRIPT_ROOT + '/saveGraph',
+    type: 'POST',
+    data: JSON.stringify({
+      'name': filename,
+      'data': $('#graphdata').val(),
+      'overwrite': overwrite
+    }),
+    contentType: 'application/json; charset="utf-8"',
+    error: function(jqXHR, textStatus, errorThrown) {
+      GUI_Error('An error occurred while saving the graph. Ensure the backend webserver is reachable and write permissions are guaranteed for the destination directory.');
+    },
+    success: function(res) {
+      if(res["error"]) {
+        GUI_Error('An error occurred while saving the graph: ' + res["error"]);
+      } else {
+        if( ("ask_overwrite" in res) && (res["ask_overwrite"]) ) {
+          if( confirm('The graph ' + filename + ' already exists: overwrite it?') ) {
+            GUI_SaveServerSide(true);
+          }
+        } else {
+          GUI_LoadSaveSuccess('Graph saved successfully!');
+        }
+      }
+    }
+  });
+}
+
+function GUI_LoadServerSide() {
+  if( !$SERVERSIDE_SAVE_ENABLE )
+    return;
+
+  GUI_Error();
+
+  var filename = $('#load_from_server_filename').val();
+
+  $.ajax({
+    url: $SCRIPT_ROOT + '/loadGraph',
+    type: 'GET',
+    data: {
+      'name': filename
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      GUI_Error('An error occurred while loading the graph. Ensure the backend webserver is reachable and read permissions are guaranteed for the source directory.');
+    },
+    success: function(res) {
+      if(res["error"]) {
+        GUI_Error('An error occurred while loading the graph: ' + res["error"]);
+      } else {
+        $('#graphdata').val(res["data"]);
+        GUI_DoLoadGraphFromText();
+      }
+    }
   });
 }

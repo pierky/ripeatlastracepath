@@ -25,6 +25,13 @@
 
 	$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 	$CURRENT_RELEASE = '{{ CURRENT_RELEASE }}';
+
+{% if SERVERSIDE_SAVE_ENABLE %}
+	$SERVERSIDE_SAVE_ENABLE = true;
+{% else %}
+	$SERVERSIDE_SAVE_ENABLE = false;
+{% endif %}
+
 {% if CHECKUPDATES_ENABLE %}
 	$CHECKUPDATES_ENABLE = true;
 	$CHECKUPDATES_INTERVAL = {{ CHECKUPDATES_INTERVAL }};
@@ -192,14 +199,35 @@ canvas {
 	<div id=graphdataarea style="DISPLAY:none;">
 		<center>
 		<div align=center><span id=graphdatatext></span></div>
-		<textarea id=graphdata style="WIDTH: 90%; HEIGHT: 300px" placeholder="Paste graph's JSON blob here"></textarea>
+		<textarea id=graphdata style="WIDTH: 90%; HEIGHT: 250px" placeholder="Paste graph's JSON blob here"></textarea>
 		<br>
+		{% if SERVERSIDE_SAVE_ENABLE %}
+		<span>File name:</span>
+		<select id="load_from_server_filename" style="DISPLAY:none"></select>
+		<input type="text" id="save_to_server_filename" list="save_to_server_files" style="DISPLAY:none"/>
+		<datalist id="save_to_server_files"/>
+		</datalist>
+		<button class="btn btn-default btn-primary" onclick="GUI_SaveServerSide(false)" type="button" id="save_to_server">
+			<span class="glyphicon glyphicon-floppy-save"></span>
+			Save on server
+		</button>
+		<button class="btn btn-default btn-primary" onclick="GUI_LoadServerSide()" type="button" id="load_from_server">
+			<span class="glyphicon glyphicon-floppy-open"></span>
+			Load from server
+		</button>
+		<div class="alert alert-success" role="alert" style="display:none" id="load_save_success">
+			<span id="load_save_success_text"></span>
+		</div>
+		<br>
+		<hr>
+		{% endif %}
 		<button class="btn btn-default btn-primary" onclick="GUI_DoSavePNG()" type="button" id="savepng_btn">
 			<span class="glyphicon glyphicon-picture"></span>
 			Export as PNG
 		</button>
 		<button class="btn btn-default btn-primary" onclick="GUI_DoLoadGraphFromText()" id="loadgraphfromjson_btn">Load graph from JSON above</button>
 		<button class="btn btn-default" onclick="GUI_DoCloseLoadGraph()">Close</button>
+		<hr>
 		<div style="display:none" id="svgdataurl"></div>
 		<div style="display:none" id="pngdataurl"></div>
 		</center>
