@@ -220,6 +220,12 @@ function GetIPDetails({ip_addresses, success, error}) {
     getIPDetailsMethod = 'GET';
     getIPDetailsData = null;
   } else {
+
+    request_id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+      return v.toString(16);
+    });
+
     getIPDetailsURL = $SCRIPT_ROOT + '/getIPDetails';
     getIPDetailsMethod = 'POST';
     getIPDetailsData = JSON.stringify({
@@ -368,11 +374,6 @@ function GUI_DoLoadMsm() {
     GUI_Error('Invalid measurement ID.');
     return;
   }
-
-  request_id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-    return v.toString(16);
-  });
 
   GUI_LoadingMsm(true);
 
