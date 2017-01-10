@@ -952,6 +952,21 @@ function GUI_ShowTraceroute(probe_id, clientX, clientY) {
   var msm_id = graph_data.MsmID;
   var div_id = 'traceroute_' + msm_id + '_' + probe_id;
 
+  // "Loading data..." tooltip
+  var tooltip_id = div_id + '_tooltip';
+  if( $('#' + tooltip_id).length == 0 ) {
+    $('body').append('<div class="traceroute_tooltip" id="' + tooltip_id + '"></div>');
+  }
+  $('#' + tooltip_id).tooltip({
+    animation: false,
+    container: 'body',
+    html: false,
+    title: "Loading data...",
+    trigger: 'manual'
+  });
+  $('#' + tooltip_id).css({top: clientY, left: clientX});
+  $('#' + tooltip_id).tooltip("show");
+
   $("body").css("cursor", "progress");
 
   var title = 'Traceroute from probe ID ' + probe_id +
@@ -966,12 +981,12 @@ function GUI_ShowTraceroute(probe_id, clientX, clientY) {
     content = err_descr;
   }, function() {
     // completed
+    $('#' + tooltip_id).tooltip("hide");
     $("body").css("cursor", "default");
     if( $('#' + div_id).length == 0 ) {
       $('body').append('<div class="traceroute_details" id="' + div_id + '"></div>');
-
-      CreatePopover(div_id, title, content);
     }
+    CreatePopover(div_id, title, content);
     $('#' + div_id).css({top: clientY, left: clientX}).show();
     $('#' + div_id).popover("show");
   });
