@@ -7,7 +7,7 @@ import os
 import codecs
 from config import *
 
-CURRENT_RELEASE = "v0.5.0"
+CURRENT_RELEASE = "v0.6.0"
 
 if "SERVERSIDE_SAVE_ENABLE" not in locals():
     # To have a backward compatible behaviour with <= v0.5.0,
